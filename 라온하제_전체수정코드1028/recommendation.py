@@ -315,7 +315,6 @@
 
 
 import streamlit as st
-from fuzzywuzzy import process, fuzz
 import pandas as pd
 import re
 
@@ -333,6 +332,10 @@ if 'selected_facility' not in st.session_state:
     st.session_state.selected_facility = None
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
+
+def simple_similarity(str1, str2):
+    """ 두 문자열의 유사성을 단순히 비교하는 함수 """
+    return str1 in str2 or str2 in str1
 
 def recommend_facilities():
     st.write("위치 정보를 입력해주세요.")
@@ -365,6 +368,7 @@ def recommend_facilities():
                     st.write(f"**{location_input}**에 있는 노인 복지시설에 대한 정보를 알려드리겠습니다.")
                 else:
                     st.warning("데이터에 필요한 컬럼들이 없습니다. ('시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)')")
+
         else:
             st.warning(f"입력하신 위치 '{location_input}'는 올바른 형식이 아닙니다. '구' 단위의 정확한 지역명을 입력해주세요.")
             st.session_state.invalid_keyword = True
@@ -377,9 +381,17 @@ def recommend_facilities():
             filtered_df = st.session_state.filtered_df
             if not filtered_df.empty:
                 available_keywords = filtered_df['combined_text'].unique()
-                best_match_keyword, similarity_score = process.extractOne(keyword_input, available_keywords, scorer=fuzz.token_set_ratio)
+                best_match_keyword = None
+                best_match_score = 0
 
-                if similarity_score < 50:
+                # 문자열 유사도 비교
+                for keyword in available_keywords:
+                    score = simple_similarity(keyword_input, keyword)
+                    if score and score > best_match_score:
+                        best_match_score = score
+                        best_match_keyword = keyword
+
+                if not best_match_keyword:
                     st.warning(f"입력하신 키워드 '{keyword_input}'에 해당하는 시설을 찾을 수 없습니다.")
                     st.session_state.invalid_keyword = True
                     st.session_state.keyword = None
@@ -392,16 +404,23 @@ def recommend_facilities():
         filtered_df = st.session_state.filtered_df
         if all(col in filtered_df.columns for col in ['시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)']):
             available_keywords = filtered_df['combined_text'].unique()
-            best_match_keyword, similarity_score = process.extractOne(st.session_state.keyword, available_keywords, scorer=fuzz.token_set_ratio)
+            best_match_keyword = None
+            best_match_score = 0
 
-            if similarity_score < 50:
+            # 문자열 유사도 비교
+            for keyword in available_keywords:
+                score = simple_similarity(st.session_state.keyword, keyword)
+                if score and score > best_match_score:
+                    best_match_score = score
+                    best_match_keyword = keyword
+
+            if not best_match_keyword:
                 st.warning(f"입력하신 키워드 '{st.session_state.keyword}'에 해당하는 시설을 찾을 수 없습니다.")
                 st.session_state.invalid_keyword = True
             else:
                 unique_facilities = []
                 for facility_name in available_keywords:
-                    match_score = fuzz.token_set_ratio(st.session_state.keyword, facility_name)
-                    if match_score >= 50 and facility_name not in unique_facilities:
+                    if simple_similarity(st.session_state.keyword, facility_name) and facility_name not in unique_facilities:
                         unique_facilities.append(facility_name)
 
                 if len(unique_facilities) > 0:
