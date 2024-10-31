@@ -319,7 +319,7 @@ import pandas as pd
 import re
 
 # CSV 파일 로드
-df = pd.read_csv("서울시 사회복지시설 병합.csv", encoding='utf-8')
+#df = pd.read_csv("서울시 사회복지시설 병합.csv", encoding='utf-8')
 
 # 세션 초기화
 if 'location' not in st.session_state:
