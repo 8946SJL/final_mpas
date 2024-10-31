@@ -315,9 +315,7 @@
 
 
 import streamlit as st
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from fuzzywuzzy import process
+from fuzzywuzzy import process, fuzz
 import pandas as pd
 import re
 
@@ -379,7 +377,7 @@ def recommend_facilities():
             filtered_df = st.session_state.filtered_df
             if not filtered_df.empty:
                 available_keywords = filtered_df['combined_text'].unique()
-                best_match_keyword, similarity_score = process.extractOne(keyword_input, available_keywords)
+                best_match_keyword, similarity_score = process.extractOne(keyword_input, available_keywords, scorer=fuzz.token_set_ratio)
 
                 if similarity_score < 50:
                     st.warning(f"입력하신 키워드 '{keyword_input}'에 해당하는 시설을 찾을 수 없습니다.")
@@ -393,26 +391,18 @@ def recommend_facilities():
     if st.session_state.location and st.session_state.keyword:
         filtered_df = st.session_state.filtered_df
         if all(col in filtered_df.columns for col in ['시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)']):
-            tfidf = TfidfVectorizer(stop_words='english')
-            tfidf_matrix = tfidf.fit_transform(filtered_df['combined_text'])
             available_keywords = filtered_df['combined_text'].unique()
-            best_match_keyword, similarity_score = process.extractOne(st.session_state.keyword, available_keywords)
+            best_match_keyword, similarity_score = process.extractOne(st.session_state.keyword, available_keywords, scorer=fuzz.token_set_ratio)
 
             if similarity_score < 50:
                 st.warning(f"입력하신 키워드 '{st.session_state.keyword}'에 해당하는 시설을 찾을 수 없습니다.")
                 st.session_state.invalid_keyword = True
             else:
-                user_tfidf_vector = tfidf.transform([best_match_keyword])
-                cosine_similarities = cosine_similarity(user_tfidf_vector, tfidf_matrix)
-                most_similar_indices = cosine_similarities[0].argsort()[::-1]
                 unique_facilities = []
-
-                for idx in most_similar_indices:
-                    facility_name = filtered_df.iloc[idx]['시설명']
-                    if facility_name not in unique_facilities:
+                for facility_name in available_keywords:
+                    match_score = fuzz.token_set_ratio(st.session_state.keyword, facility_name)
+                    if match_score >= 50 and facility_name not in unique_facilities:
                         unique_facilities.append(facility_name)
-                    if len(unique_facilities) >= 3:
-                        break
 
                 if len(unique_facilities) > 0:
                     for idx, facility_name in enumerate(unique_facilities):
