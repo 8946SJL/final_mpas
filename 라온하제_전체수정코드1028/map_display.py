@@ -289,7 +289,6 @@
 
 
 import streamlit as st
-from fuzzywuzzy import process
 from streamlit_folium import st_folium
 from googlemap import user_map
 import googlemap  # googlemap.py에서 함수 불러옴
@@ -378,9 +377,17 @@ def continue_recommendation():
     filtered_df = st.session_state.filtered_df
 
     available_keywords = filtered_df['combined_text'].unique()
-    best_match_keyword, similarity_score = process.extractOne(st.session_state.keyword, available_keywords)
+    best_match_keyword = None
+    best_match_score = 0
 
-    if similarity_score < 50:
+    # 가장 유사한 키워드를 찾기 위한 간단한 문자열 비교
+    for keyword in available_keywords:
+        similarity_score = string_similarity(st.session_state.keyword, keyword)
+        if similarity_score > best_match_score:
+            best_match_score = similarity_score
+            best_match_keyword = keyword
+
+    if best_match_score < 0.5:  # 0.5 이하인 경우
         st.warning(f"입력하신 키워드 '{st.session_state.keyword}'에 해당하는 시설을 찾을 수 없습니다.")
     else:
         # 가장 유사한 시설 찾기
@@ -409,3 +416,14 @@ def continue_recommendation():
         st.session_state.recommended_indices = []
         st.session_state.invalid_keyword = False
         st.experimental_rerun()
+
+# 문자열 유사도를 계산하는 함수
+def string_similarity(str1, str2):
+    """ 두 문자열 간의 유사도를 계산하는 함수 (Jaccard 유사도) """
+    set1 = set(str1.lower().split())
+    set2 = set(str2.lower().split())
+    intersection = len(set1.intersection(set2))
+    union = len(set1.union(set2))
+    if union == 0:
+        return 0
+    return intersection / union
