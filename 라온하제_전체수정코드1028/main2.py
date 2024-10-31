@@ -222,7 +222,6 @@
 
 
 import streamlit as st
-from recommendation import recommend_facilities
 from map_display import display_facility_detail, continue_recommendation
 from session_manager import initialize_session
 from db_connection import create_connection
@@ -306,9 +305,10 @@ else:
             if st.button("노인 일자리 정보", key="jobs_btn"):
                 st.session_state.page = 'senior_jobs'
 
-    # 노인 복지시설 정보 화면
-    if st.session_state.page == 'welfare_facility':
-        recommend_facilities()
+
+    #  # 노인 복지시설 정보 화면
+    # if st.session_state.page == 'welfare_facility':
+    #     recommend_facilities()
 
     # 시설 상세 정보 화면 및 북마크 버튼 추가
     if st.session_state.page == 'facility_detail' and not st.session_state.selected_facility.empty:
