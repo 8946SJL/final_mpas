@@ -1,0 +1,7 @@
+streamlit==1.25.0
+pandas
+mysql-connector-python
+pymongo
+scikit-learn==1.5.2
+
+
