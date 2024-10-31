@@ -314,128 +314,143 @@
 #             st.warning("데이터에 필요한 컬럼들이 없습니다. ('시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)')")
 
 
-import streamlit as st
-import pandas as pd
-import re
+# import streamlit as st
+# import pandas as pd
+# import re
 
-# CSV 파일 로드
-#df = pd.read_csv("서울시 사회복지시설 병합.csv", encoding='utf-8')
+# # CSV 파일 로드
+# #df = pd.read_csv("서울시 사회복지시설 병합.csv", encoding='utf-8')
+
+# # 세션 초기화
+# if 'location' not in st.session_state:
+#     st.session_state.location = None
+# if 'keyword' not in st.session_state:
+#     st.session_state.keyword = None
+# if 'invalid_keyword' not in st.session_state:
+#     st.session_state.invalid_keyword = False
+# if 'selected_facility' not in st.session_state:
+#     st.session_state.selected_facility = None
+# if 'page' not in st.session_state:
+#     st.session_state.page = 'home'
+
+# def simple_similarity(str1, str2):
+#     """ 두 문자열의 유사성을 단순히 비교하는 함수 """
+#     return str1 in str2 or str2 in str1
+
+# def recommend_facilities():
+#     st.write("위치 정보를 입력해주세요.")
+#     location_input = st.text_input("주소를 입력하세요(ex. 종로구)", value=st.session_state.location if st.session_state.location else "")
+    
+#     if st.button("위치 확인"):
+#         valid_location_pattern = r'[가-힣]+(구)?'
+#         match = re.match(valid_location_pattern, location_input)
+
+#         if match:
+#             if not location_input.endswith("구"):
+#                 location_input += "구"
+#             filtered_df = df[df['시군구명'].str.contains(location_input) | df['시설주소'].str.contains(location_input)]
+
+#             if filtered_df.empty:
+#                 st.warning(f"입력하신 위치 '{location_input}'에 해당하는 시설을 찾을 수 없습니다.")
+#                 st.session_state.invalid_keyword = True
+#                 st.session_state.location = None
+#                 st.session_state.filtered_df = None
+#             else:
+#                 if all(col in filtered_df.columns for col in ['시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)']):
+#                     filtered_df['combined_text'] = (
+#                         filtered_df['시설명'] + " " +
+#                         filtered_df['시설종류명(시설유형)'] + " " +
+#                         filtered_df['시설종류상세명(시설종류)']
+#                     )
+#                     st.session_state.location = location_input
+#                     st.session_state.filtered_df = filtered_df
+#                     st.session_state.invalid_keyword = False
+#                     st.write(f"**{location_input}**에 있는 노인 복지시설에 대한 정보를 알려드리겠습니다.")
+#                 else:
+#                     st.warning("데이터에 필요한 컬럼들이 없습니다. ('시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)')")
+
+#         else:
+#             st.warning(f"입력하신 위치 '{location_input}'는 올바른 형식이 아닙니다. '구' 단위의 정확한 지역명을 입력해주세요.")
+#             st.session_state.invalid_keyword = True
+
+#     if st.session_state.location and not st.session_state.invalid_keyword:
+#         st.write("원하는 사회복지시설 서비스 키워드를 입력하세요 (예: 치매)")
+#         keyword_input = st.text_input("키워드 입력", value=st.session_state.keyword if st.session_state.keyword else "")
+
+#         if st.button("키워드 확인"):
+#             filtered_df = st.session_state.filtered_df
+#             if not filtered_df.empty:
+#                 available_keywords = filtered_df['combined_text'].unique()
+#                 best_match_keyword = None
+#                 best_match_score = 0
+
+#                 # 문자열 유사도 비교
+#                 for keyword in available_keywords:
+#                     score = simple_similarity(keyword_input, keyword)
+#                     if score and score > best_match_score:
+#                         best_match_score = score
+#                         best_match_keyword = keyword
+
+#                 if not best_match_keyword:
+#                     st.warning(f"입력하신 키워드 '{keyword_input}'에 해당하는 시설을 찾을 수 없습니다.")
+#                     st.session_state.invalid_keyword = True
+#                     st.session_state.keyword = None
+#                 else:
+#                     st.session_state.keyword = keyword_input
+#                     st.session_state.invalid_keyword = False
+#                     st.write(f"'{keyword_input}'와 관련된 시설 정보를 알려드리겠습니다.")
+
+#     if st.session_state.location and st.session_state.keyword:
+#         filtered_df = st.session_state.filtered_df
+#         if all(col in filtered_df.columns for col in ['시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)']):
+#             available_keywords = filtered_df['combined_text'].unique()
+#             best_match_keyword = None
+#             best_match_score = 0
+
+#             # 문자열 유사도 비교
+#             for keyword in available_keywords:
+#                 score = simple_similarity(st.session_state.keyword, keyword)
+#                 if score and score > best_match_score:
+#                     best_match_score = score
+#                     best_match_keyword = keyword
+
+#             if not best_match_keyword:
+#                 st.warning(f"입력하신 키워드 '{st.session_state.keyword}'에 해당하는 시설을 찾을 수 없습니다.")
+#                 st.session_state.invalid_keyword = True
+#             else:
+#                 unique_facilities = []
+#                 for facility_name in available_keywords:
+#                     if simple_similarity(st.session_state.keyword, facility_name) and facility_name not in unique_facilities:
+#                         unique_facilities.append(facility_name)
+
+#                 if len(unique_facilities) > 0:
+#                     for idx, facility_name in enumerate(unique_facilities):
+#                         recommended_facility = filtered_df[filtered_df['시설명'] == facility_name].iloc[0]
+#                         facility_address = recommended_facility['시설주소'] if '시설주소' in filtered_df.columns else '주소 정보 없음'
+#                         st.write(f"추천된 노인 복지시설: **{facility_name}**")
+#                         st.write(f"시설 주소: **{facility_address}**")
+
+#                         facility_key = f"{facility_name}_{facility_address}_{idx}"
+#                         if st.button(f"시설명: {facility_name} - 주소: {facility_address}", key=facility_key):
+#                             st.session_state.selected_facility = recommended_facility
+#                             st.session_state.page = 'facility_detail'
+#                 else:
+#                     st.write("해당 키워드에 맞는 시설을 찾을 수 없습니다.")
+#         else:
+#             st.warning("데이터에 필요한 컬럼들이 없습니다. ('시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)')")
+
+import streamlit as st
 
 # 세션 초기화
-if 'location' not in st.session_state:
-    st.session_state.location = None
-if 'keyword' not in st.session_state:
-    st.session_state.keyword = None
-if 'invalid_keyword' not in st.session_state:
-    st.session_state.invalid_keyword = False
-if 'selected_facility' not in st.session_state:
-    st.session_state.selected_facility = None
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-def simple_similarity(str1, str2):
-    """ 두 문자열의 유사성을 단순히 비교하는 함수 """
-    return str1 in str2 or str2 in str1
-
-def recommend_facilities():
-    st.write("위치 정보를 입력해주세요.")
-    location_input = st.text_input("주소를 입력하세요(ex. 종로구)", value=st.session_state.location if st.session_state.location else "")
+def main():
+    st.title("Hello, World! 앱")
+    st.write("안녕하세요! 이것은 간단한 Streamlit 앱입니다.")
     
-    if st.button("위치 확인"):
-        valid_location_pattern = r'[가-힣]+(구)?'
-        match = re.match(valid_location_pattern, location_input)
+    if st.button("인사하기"):
+        st.success("안녕하세요! 버튼을 눌러주셔서 감사합니다!")
 
-        if match:
-            if not location_input.endswith("구"):
-                location_input += "구"
-            filtered_df = df[df['시군구명'].str.contains(location_input) | df['시설주소'].str.contains(location_input)]
-
-            if filtered_df.empty:
-                st.warning(f"입력하신 위치 '{location_input}'에 해당하는 시설을 찾을 수 없습니다.")
-                st.session_state.invalid_keyword = True
-                st.session_state.location = None
-                st.session_state.filtered_df = None
-            else:
-                if all(col in filtered_df.columns for col in ['시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)']):
-                    filtered_df['combined_text'] = (
-                        filtered_df['시설명'] + " " +
-                        filtered_df['시설종류명(시설유형)'] + " " +
-                        filtered_df['시설종류상세명(시설종류)']
-                    )
-                    st.session_state.location = location_input
-                    st.session_state.filtered_df = filtered_df
-                    st.session_state.invalid_keyword = False
-                    st.write(f"**{location_input}**에 있는 노인 복지시설에 대한 정보를 알려드리겠습니다.")
-                else:
-                    st.warning("데이터에 필요한 컬럼들이 없습니다. ('시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)')")
-
-        else:
-            st.warning(f"입력하신 위치 '{location_input}'는 올바른 형식이 아닙니다. '구' 단위의 정확한 지역명을 입력해주세요.")
-            st.session_state.invalid_keyword = True
-
-    if st.session_state.location and not st.session_state.invalid_keyword:
-        st.write("원하는 사회복지시설 서비스 키워드를 입력하세요 (예: 치매)")
-        keyword_input = st.text_input("키워드 입력", value=st.session_state.keyword if st.session_state.keyword else "")
-
-        if st.button("키워드 확인"):
-            filtered_df = st.session_state.filtered_df
-            if not filtered_df.empty:
-                available_keywords = filtered_df['combined_text'].unique()
-                best_match_keyword = None
-                best_match_score = 0
-
-                # 문자열 유사도 비교
-                for keyword in available_keywords:
-                    score = simple_similarity(keyword_input, keyword)
-                    if score and score > best_match_score:
-                        best_match_score = score
-                        best_match_keyword = keyword
-
-                if not best_match_keyword:
-                    st.warning(f"입력하신 키워드 '{keyword_input}'에 해당하는 시설을 찾을 수 없습니다.")
-                    st.session_state.invalid_keyword = True
-                    st.session_state.keyword = None
-                else:
-                    st.session_state.keyword = keyword_input
-                    st.session_state.invalid_keyword = False
-                    st.write(f"'{keyword_input}'와 관련된 시설 정보를 알려드리겠습니다.")
-
-    if st.session_state.location and st.session_state.keyword:
-        filtered_df = st.session_state.filtered_df
-        if all(col in filtered_df.columns for col in ['시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)']):
-            available_keywords = filtered_df['combined_text'].unique()
-            best_match_keyword = None
-            best_match_score = 0
-
-            # 문자열 유사도 비교
-            for keyword in available_keywords:
-                score = simple_similarity(st.session_state.keyword, keyword)
-                if score and score > best_match_score:
-                    best_match_score = score
-                    best_match_keyword = keyword
-
-            if not best_match_keyword:
-                st.warning(f"입력하신 키워드 '{st.session_state.keyword}'에 해당하는 시설을 찾을 수 없습니다.")
-                st.session_state.invalid_keyword = True
-            else:
-                unique_facilities = []
-                for facility_name in available_keywords:
-                    if simple_similarity(st.session_state.keyword, facility_name) and facility_name not in unique_facilities:
-                        unique_facilities.append(facility_name)
-
-                if len(unique_facilities) > 0:
-                    for idx, facility_name in enumerate(unique_facilities):
-                        recommended_facility = filtered_df[filtered_df['시설명'] == facility_name].iloc[0]
-                        facility_address = recommended_facility['시설주소'] if '시설주소' in filtered_df.columns else '주소 정보 없음'
-                        st.write(f"추천된 노인 복지시설: **{facility_name}**")
-                        st.write(f"시설 주소: **{facility_address}**")
-
-                        facility_key = f"{facility_name}_{facility_address}_{idx}"
-                        if st.button(f"시설명: {facility_name} - 주소: {facility_address}", key=facility_key):
-                            st.session_state.selected_facility = recommended_facility
-                            st.session_state.page = 'facility_detail'
-                else:
-                    st.write("해당 키워드에 맞는 시설을 찾을 수 없습니다.")
-        else:
-            st.warning("데이터에 필요한 컬럼들이 없습니다. ('시설명', '시설종류명(시설유형)', '시설종류상세명(시설종류)')")
-
+if __name__ == "__main__":
+    main()
